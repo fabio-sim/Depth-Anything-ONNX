@@ -1,0 +1,7 @@
+numpy
+onnx
+onnxruntime-gpu
+opencv-python
+torch
+torchvision
+tqdm
