@@ -135,7 +135,7 @@ def main(
 
     # Sample image for tracing (dimensions don't matter)
     image, _ = load_image("assets/sacre_coeur1.jpg")
-    image = torch.from_numpy(image).to(device).half()
+    image = torch.from_numpy(image).to(device)
 
     # Export all models with all precision, quick and dirty
     if export_all:
