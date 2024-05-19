@@ -162,7 +162,7 @@ def main(
         if precision == "float16":
             image = image.half()
         depth_anything = loadModel(model, device, precision)
-        depth_anything = exportONNX(depth_anything, image, output, opset)
+        depth_anything = export_onnx(depth_anything, image, output, opset)
         if slim:
             slim_model(output)
     else:
