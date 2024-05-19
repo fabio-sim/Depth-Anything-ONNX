@@ -149,7 +149,7 @@ def main(
                 depth_anything = load_depth_anything(model, device, precision)
                 depth_anything = export_onnx(depth_anything, image, output, opset)
                 if slim:
-                    slimModel(output)
+                    slim_model(output)
 
                 print(f"Exported model: {model} with precision: {precision}")
 
