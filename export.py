@@ -57,7 +57,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def loadModel(model, device, precision="float32"):
+def load_depth_anything(model, device, precision="float32"):
     # Load model params
     if model == "s":
         depth_anything = DPT_DINOv2(
