@@ -87,7 +87,7 @@ def load_depth_anything(model, device, precision="float32"):
         return depth_anything
 
 
-def exportONNX(
+def export_onnx(
     depth_anything,
     image,
     output: str,
