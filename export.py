@@ -146,7 +146,7 @@ def main(
                 output = f"weights/depth_anything_vit{model}14_{precision}.onnx"
                 
                 image = image.float() if precision == "float32" else image.half()
-                depth_anything = loadModel(model, device, precision)
+                depth_anything = load_depth_anything(model, device, precision)
                 depth_anything = exportONNX(depth_anything, image, output, opset)
                 if slim:
                     slimModel(output)
