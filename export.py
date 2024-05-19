@@ -164,7 +164,7 @@ def main(
         depth_anything = loadModel(model, device, precision)
         depth_anything = exportONNX(depth_anything, image, output, opset)
         if slim:
-            slimModel(output)
+            slim_model(output)
     else:
         print("No model specified.")
 
