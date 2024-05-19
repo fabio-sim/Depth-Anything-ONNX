@@ -1,7 +1,7 @@
 import argparse
 import subprocess
-import torch
 
+import torch
 from onnx import load_model, save_model
 from onnxruntime.tools.symbolic_shape_infer import SymbolicShapeInference
 
