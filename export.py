@@ -112,7 +112,7 @@ def export_onnx(
     )
 
 
-def slimModel(model: str):
+def slim_model(model: str):
     output = model.replace(".onnx", "_slim.onnx")
     try:
         subprocess.run(f"python -m onnxslim {model} {output}", stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
