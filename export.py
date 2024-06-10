@@ -115,7 +115,7 @@ def export_onnx(
 def slim_model(model: str):
     output = model.replace(".onnx", "_slim.onnx")
     try:
-        subprocess.run(f"python -m onnxslim {model} {output}", stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        subprocess.run(["python", "-m", "onnxslim", model, output], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     except Exception as e:
         print(f"Failed to slim model: {e}")
         return
