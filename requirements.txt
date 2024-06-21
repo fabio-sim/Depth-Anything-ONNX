@@ -1,8 +1,10 @@
 numpy
 onnx
 onnxruntime-gpu
+onnxscript
+onnxslim
 opencv-python
 torch
 torchvision
 tqdm
-onnxslim
+typer
