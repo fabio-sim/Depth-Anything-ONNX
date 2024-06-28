@@ -1,5 +1,6 @@
 .vscode
 *.onnx
+*.pt2
 megadepth_test_1500
 
 # Byte-compiled / optimized / DLL files
