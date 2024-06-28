@@ -201,8 +201,10 @@ class DinoVisionTransformer(nn.Module):
         previous_dtype = x.dtype
         npatch = x.shape[1] - 1
         N = self.pos_embed.shape[1] - 1
-        if npatch == N and w == h:
+        if npatch == N and w == h:  # Safe to ignore warning.
+            # This branch corresponds to 518, 518.
             return self.pos_embed
+        # Otherwise, dynamic axes:
         pos_embed = self.pos_embed.float()
         class_pos_embed = pos_embed[:, 0]
         patch_pos_embed = pos_embed[:, 1:]
@@ -212,23 +214,25 @@ class DinoVisionTransformer(nn.Module):
         # we add a small number to avoid floating point error in the interpolation
         # see discussion at https://github.com/facebookresearch/dino/issues/8
         # DINOv2 with register modify the interpolate_offset from 0.1 to 0.0
-        w0, h0 = w0 + self.interpolate_offset, h0 + self.interpolate_offset
+        ## Tracing nn.functional.interpolate is problematic with float sizes
+        # w0, h0 = w0 + self.interpolate_offset, h0 + self.interpolate_offset
         # w0, h0 = w0 + 0.1, h0 + 0.1
 
         sqrt_N = N**0.5
-        sx, sy = w0 / sqrt_N, h0 / sqrt_N
+        # sx, sy = w0 / sqrt_N, h0 / sqrt_N
         patch_pos_embed = nn.functional.interpolate(
-            patch_pos_embed.reshape(1, int(sqrt_N), int(sqrt_N), dim).permute(
-                0, 3, 1, 2
-            ),
-            scale_factor=(sx, sy),
-            # (int(w0), int(h0)), # to solve the upsampling shape issue
+            patch_pos_embed.reshape(
+                1,
+                int(sqrt_N),  # Always constant, safe to ignore
+                int(sqrt_N),  # Always constant, safe to ignore
+                dim,
+            ).permute(0, 3, 1, 2),
+            # scale_factor=(sx, sy),
+            size=(w0, h0),  # to solve the upsampling shape issue
             mode="bicubic",
             antialias=self.interpolate_antialias,
         )
 
-        assert int(w0) == patch_pos_embed.shape[-2]
-        assert int(h0) == patch_pos_embed.shape[-1]
         patch_pos_embed = patch_pos_embed.permute(0, 2, 3, 1).view(1, -1, dim)
         return torch.cat((class_pos_embed.unsqueeze(0), patch_pos_embed), dim=1).to(
             previous_dtype

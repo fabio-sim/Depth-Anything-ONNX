@@ -6,7 +6,11 @@
 
 Open Neural Network Exchange (ONNX) compatible implementation of [Depth Anything: Unleashing the Power of Large-Scale Unlabeled Data](https://github.com/LiheYoung/Depth-Anything) and [Depth Anything V2](https://github.com/DepthAnything/Depth-Anything-V2). Supports PyTorch 2 Export via TorchDynamo.
 
-<p align="center"><img src="assets/sample.png" width=90%>
+<p align="center"><img src="assets/demo.gif" autoplay width=90%></p>
+
+<p align="center"><em>Monocular Depth Estimation with Depth Anything V2</em></p>
+
+<p align="center"><img src="assets/sample.png" width=90%></p>
 
 #### Changelog:
 - **22 June 2024**: Support Depth Anything V2 and TorchDynamo Export.

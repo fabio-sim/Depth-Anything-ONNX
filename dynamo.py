@@ -29,6 +29,12 @@ def callback():
     """Depth-Anything Dynamo CLI"""
 
 
+def multiple_of_14(value: int) -> int:
+    if value % 14 != 0:
+        raise typer.BadParameter("Value must be a multiple of 14.")
+    return value
+
+
 @app.command()
 def export(
     encoder: Annotated[Encoder, typer.Option()] = Encoder.vitb,
@@ -51,9 +57,29 @@ def export(
             "-b",
             "--batch-size",
             min=0,
-            help="Batch size of exported ONNX model. Defaults to 1. Set to 0 for dynamic batch size (opset <= 17).",
+            help="Batch size of exported ONNX model. Set to 0 to mark as dynamic (opset <= 17).",
         ),
     ] = 1,
+    height: Annotated[
+        int,
+        typer.Option(
+            "-h",
+            "--height",
+            min=0,
+            help="Height of input image. Set to 0 to mark as dynamic (opset <= 17).",
+            callback=multiple_of_14,
+        ),
+    ] = 518,
+    width: Annotated[
+        int,
+        typer.Option(
+            "-w",
+            "--width",
+            min=0,
+            help="Width of input image. Set to 0 to mark as dynamic (opset <= 17).",
+            callback=multiple_of_14,
+        ),
+    ] = 518,
     opset: Annotated[
         int,
         typer.Option(
@@ -89,19 +115,21 @@ def export(
             onnx_program.save(str(output))
         else:  # <= 17
             typer.echo("Exporting to ONNX using legacy JIT tracer.")
+            dynamic_axes = {}
+            if batch_size == 0:
+                dynamic_axes[0] = "batch_size"
+            if height == 0:
+                dynamic_axes[2] = "height"
+            if width == 0:
+                dynamic_axes[3] = "width"
             torch.onnx.export(
                 model,
-                torch.randn(batch_size or 1, 3, 518, 518),
+                torch.randn(batch_size or 1, 3, height or 140, width or 140),
                 str(output),
                 input_names=["image"],
                 output_names=["depth"],
                 opset_version=opset,
-                dynamic_axes={
-                    "image": {0: "batch_size"},
-                    "depth": {0: "batch_size"},
-                }
-                if batch_size == 0
-                else None,
+                dynamic_axes={"image": dynamic_axes, "depth": dynamic_axes},
             )
     elif format == ExportFormat.pt2:
         batch_dim = torch.export.Dim("batch_size")
@@ -135,6 +163,26 @@ def infer(
             help="Path to input image.",
         ),
     ],
+    height: Annotated[
+        int,
+        typer.Option(
+            "-h",
+            "--height",
+            min=14,
+            help="Height at which to perform inference. The input image will be resized to this.",
+            callback=multiple_of_14,
+        ),
+    ] = 518,
+    width: Annotated[
+        int,
+        typer.Option(
+            "-w",
+            "--width",
+            min=14,
+            help="Width at which to perform inference. The input image will be resized to this.",
+            callback=multiple_of_14,
+        ),
+    ] = 518,
     device: Annotated[
         InferenceDevice, typer.Option("-d", "--device", help="Inference device.")
     ] = InferenceDevice.cuda,
@@ -154,7 +202,7 @@ def infer(
     image = cv2.imread(str(image_path))
     h, w = image.shape[:2]
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) / 255.0
-    image = cv2.resize(image, (518, 518), interpolation=cv2.INTER_CUBIC)
+    image = cv2.resize(image, (width, height), interpolation=cv2.INTER_CUBIC)
     image = (image - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225]
     image = image.transpose(2, 0, 1)[None].astype("float32")
 
