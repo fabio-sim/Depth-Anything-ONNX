@@ -7,7 +7,7 @@ import onnxruntime as ort
 import torch
 import typer
 
-from depth_anything_v2.config import Encoder
+from depth_anything_v2.config import Encoder, Metric
 from depth_anything_v2.dpt import DepthAnythingV2
 
 
@@ -38,6 +38,9 @@ def multiple_of_14(value: int) -> int:
 @app.command()
 def export(
     encoder: Annotated[Encoder, typer.Option()] = Encoder.vitb,
+    metric: Annotated[
+        Optional[Metric], typer.Option(help="Export metric depth models.")
+    ] = None,
     output: Annotated[
         Optional[Path],
         typer.Option(
@@ -100,12 +103,18 @@ def export(
     if output is None:
         output = Path(f"weights/depth_anything_v2_{encoder}_{opset}.{format}")
 
+    config = encoder.get_config(metric)
     model = DepthAnythingV2(
         encoder=encoder.value,
-        features=encoder.config.features,
-        out_channels=encoder.config.out_channels,
+        features=config.features,
+        out_channels=config.out_channels,
+        max_depth=20
+        if metric == Metric.indoor
+        else 80
+        if metric == Metric.outdoor
+        else None,
     )
-    model.load_state_dict(torch.hub.load_state_dict_from_url(encoder.config.url))
+    model.load_state_dict(torch.hub.load_state_dict_from_url(config.url))
 
     if format == ExportFormat.onnx:
         if opset == 18:

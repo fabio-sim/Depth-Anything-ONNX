@@ -1,3 +1,5 @@
+from typing import Optional
+
 import cv2
 import torch
 import torch.nn as nn
@@ -176,6 +178,7 @@ class DepthAnythingV2(nn.Module):
         out_channels=[256, 512, 1024, 1024],
         use_bn=False,
         use_clstoken=False,
+        max_depth: Optional[float] = None,
     ):
         super(DepthAnythingV2, self).__init__()
 
@@ -196,6 +199,7 @@ class DepthAnythingV2(nn.Module):
             out_channels=out_channels,
             use_clstoken=use_clstoken,
         )
+        self.max_depth = max_depth
 
     def forward(self, x):
         patch_h, patch_w = x.shape[-2] // 14, x.shape[-1] // 14
@@ -207,7 +211,11 @@ class DepthAnythingV2(nn.Module):
         )
 
         depth = self.depth_head(features, patch_h, patch_w)
-        depth = F.relu(depth)
+
+        if self.max_depth is not None:
+            depth = depth * self.max_depth
+        else:
+            depth = F.relu(depth)
 
         return depth[:, 0]
 
