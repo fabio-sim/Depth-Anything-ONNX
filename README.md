@@ -28,7 +28,7 @@ $ python dynamo.py --help
  Depth-Anything Dynamo CLI                                               
                                                                          
 ╭─ Commands ───────────────────────────────────────────────╮
-│ export   Export Depth-Anything V2 using TorchDynamo.     │
+│ export   Export Depth-Anything V2 using TS or Dynamo.    │
 │ infer    Depth-Anything V2 inference using ONNXRuntime.  │
 │          No dependency on PyTorch.                       │
 ╰──────────────────────────────────────────────────────────╯
@@ -58,11 +58,23 @@ torch==2.3.1
 > You can view the available options at any time by passing `--help`.
 
 ```bash
-python dynamo.py export --encoder vitb --output weights/vitb.onnx --opset 18
+python dynamo.py export --encoder vitb --output weights/vitb.onnx --opset 17
 ```
 
+For dynamic shapes:
+
+```bash
+python dynamo.py export --encoder vitb -b 0 -h 0 -w 0
+```
+
+#### Export via TorchDynamo Example
+
 > [!CAUTION]
-> The TorchDynamo-based ONNX Exporter is a new beta feature that may undergo breaking changes in the future. Currently, only opset version 18 is supported. Specifying a smaller opset version will fall back to the legacy TorchScript-based Exporter.
+> The TorchDynamo-based ONNX Exporter is a new beta feature that may undergo breaking changes in the future. Currently, only static shapes and opset version 18 are supported.
+
+```bash
+python dynamo.py export --encoder vitb --output weights/vitb.onnx --use-dynamo -h 1036 -w 1036
+```
 
 ### Inference Example
 

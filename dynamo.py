@@ -60,7 +60,7 @@ def export(
             "-b",
             "--batch-size",
             min=0,
-            help="Batch size of exported ONNX model. Set to 0 to mark as dynamic (opset <= 17).",
+            help="Batch size of exported ONNX model. Set to 0 to mark as dynamic.",
         ),
     ] = 1,
     height: Annotated[
@@ -69,7 +69,7 @@ def export(
             "-h",
             "--height",
             min=0,
-            help="Height of input image. Set to 0 to mark as dynamic (opset <= 17).",
+            help="Height of input image. Set to 0 to mark as dynamic.",
             callback=multiple_of_14,
         ),
     ] = 518,
@@ -79,17 +79,23 @@ def export(
             "-w",
             "--width",
             min=0,
-            help="Width of input image. Set to 0 to mark as dynamic (opset <= 17).",
+            help="Width of input image. Set to 0 to mark as dynamic.",
             callback=multiple_of_14,
         ),
     ] = 518,
     opset: Annotated[
         int,
         typer.Option(
-            max=18,
-            help="ONNX opset version of exported model. Defaults to 18 (export via TorchDynamo).",
+            max=17,
+            help="ONNX opset version of exported model. Defaults to 17.",
         ),
-    ] = 18,
+    ] = 17,
+    use_dynamo: Annotated[
+        bool,
+        typer.Option(
+            help="Use TorchDynamo (Beta) for ONNX export. Only supports static shapes and opset 18."
+        ),
+    ] = False,
 ):
     """Export Depth-Anything V2 using TorchDynamo."""
     if encoder == Encoder.vitg:
@@ -117,12 +123,15 @@ def export(
     model.load_state_dict(torch.hub.load_state_dict_from_url(config.url))
 
     if format == ExportFormat.onnx:
-        if opset == 18:
+        if use_dynamo:
+            typer.echo(
+                "Exporting to ONNX using TorchDynamo (Beta). Only supports static shapes and opset 18."
+            )
             onnx_program = torch.onnx.dynamo_export(
-                model, torch.randn(batch_size, 3, 518, 518)
+                model, torch.randn(batch_size or 1, 3, height or 518, width or 518)
             )
             onnx_program.save(str(output))
-        else:  # <= 17
+        else:  # Use TS exporter.
             typer.echo("Exporting to ONNX using legacy JIT tracer.")
             dynamic_axes = {}
             if batch_size == 0:
@@ -144,7 +153,7 @@ def export(
         batch_dim = torch.export.Dim("batch_size")
         export_program = torch.export.export(
             model.eval(),
-            (torch.randn(2, 3, 518, 518),),
+            (torch.randn(2, 3, height or 518, width or 518),),
             dynamic_shapes={
                 "x": {0: batch_dim},
             },
