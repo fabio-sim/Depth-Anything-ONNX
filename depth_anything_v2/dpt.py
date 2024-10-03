@@ -45,6 +45,7 @@ class DPTHead(nn.Module):
         use_bn=False,
         out_channels=[256, 512, 1024, 1024],
         use_clstoken=False,
+        metric=False
     ):
         super(DPTHead, self).__init__()
 
@@ -117,19 +118,34 @@ class DPTHead(nn.Module):
         self.scratch.output_conv1 = nn.Conv2d(
             head_features_1, head_features_1 // 2, kernel_size=3, stride=1, padding=1
         )
-        self.scratch.output_conv2 = nn.Sequential(
-            nn.Conv2d(
-                head_features_1 // 2,
-                head_features_2,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-            ),
-            nn.ReLU(True),
-            nn.Conv2d(head_features_2, 1, kernel_size=1, stride=1, padding=0),
-            nn.ReLU(True),
-            nn.Identity(),
-        )
+
+        if not metric:
+            self.scratch.output_conv2 = nn.Sequential(
+                nn.Conv2d(
+                    head_features_1 // 2,
+                    head_features_2,
+                    kernel_size=3,
+                    stride=1,
+                    padding=1,
+                ),
+                nn.ReLU(True),
+                nn.Conv2d(head_features_2, 1, kernel_size=1, stride=1, padding=0),
+                nn.ReLU(True),
+                nn.Identity(),
+            )
+        else:
+            self.scratch.output_conv2 = nn.Sequential(
+                nn.Conv2d(
+                    head_features_1 // 2,
+                    head_features_2,
+                    kernel_size=3,
+                    stride=1,
+                    padding=1,
+                ),
+                nn.ReLU(True),
+                nn.Conv2d(head_features_2, 1, kernel_size=1, stride=1, padding=0),
+                nn.Sigmoid()
+            )
 
     def forward(self, out_features, patch_h, patch_w):
         out = []
@@ -198,6 +214,7 @@ class DepthAnythingV2(nn.Module):
             use_bn,
             out_channels=out_channels,
             use_clstoken=use_clstoken,
+            metric=(max_depth is not None),
         )
         self.max_depth = max_depth
 
